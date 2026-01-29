@@ -1,92 +1,104 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
-from datetime import datetime
 
-# --- SETTINGS & THEME ---
-st.set_page_config(page_title="CommerceIntel Pro", layout="wide", page_icon="📈")
+# --- MODERN PAGE CONFIG ---
+st.set_page_config(
+    page_title="InsightCommerce Pro",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
-# Custom UI Styling
+# --- CUSTOM CSS FOR BETTER LOOKS ---
 st.markdown("""
     <style>
-    .main { background-color: #f4f7f9; }
-    .stMetric { background-color: #ffffff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eef0f2; }
-    .hero-title { font-size: 50px; font-weight: 800; color: #1e293b; margin-bottom: 0px; }
-    .hero-subtitle { font-size: 20px; color: #64748b; margin-bottom: 30px; }
+    .main {
+        background-color: #f5f7f9;
+    }
+    .stMetric {
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .stButton>button {
+        width: 100%;
+        border-radius: 20px;
+        background-color: #007bff;
+        color: white;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- SIDEBAR NAVIGATION ---
+# --- SIDEBAR ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/3039/3039434.png", width=60) # Small Logo
-    st.title("🛡️ CommerceIntel")
-    st.caption("Advanced Retail Analytics v3.0")
+    st.title("🛡️ ChurnAnalytica")
+    st.info("The Ultimate E-commerce Intelligence Suite")
+    page = st.radio("Menu", ["🏠 Dashboard Home", "📈 Analysis Lab", "🔮 AI Predictor"])
     st.divider()
-    page = st.radio("Navigation", ["🏠 Home", "📊 Dashboard", "📁 Data Lab", "🔮 Risk Engine"])
-    st.divider()
-    st.success("System: Connected")
+    st.caption("v2.0 - Research Edition")
 
-# --- 1. HOME PAGE (New Premium UI) ---
-if page == "🏠 Home":
-    col_text, col_img = st.columns([1, 1.2], gap="large")
+# --- 1. HOME DASHBOARD ---
+if page == "🏠 Dashboard Home":
+    st.title("Project Overview")
     
-    with col_text:
-        st.markdown('<p class="hero-title">Predictive Intelligence</p>', unsafe_allow_html=True)
-        st.markdown('<p class="hero-subtitle">Transform raw retail data into actionable growth strategies with AI-driven insights.</p>', unsafe_allow_html=True)
+    # Hero Metric Row
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Avg. Retention", "84%", "+2.5%")
+    col2.metric("Churn Risk", "12%", "-1.2%", delta_color="inverse")
+    col3.metric("Avg. Order", "$142", "+$12")
+
+    st.markdown("---")
+    st.subheader("Why this Research Matters")
+    st.write("""
+    Retaining an existing customer is **5x cheaper** than acquiring a new one. 
+    This platform uses data to identify 'At-Risk' users before they leave.
+    """)
+    st.image("https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1000&q=80")
+
+# --- 2. ANALYSIS LAB ---
+elif page == "📈 Analysis Lab":
+    st.title("Data Intelligence Lab")
+    uploaded_file = st.file_uploader("Drop your CSV here", type="csv")
+    
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
         
-        st.info("📊 **Active Modules:** Churn Prediction, Trend Discovery, and Revenue Optimization.")
-        st.button("Explore Analytics Lab", type="primary", use_container_width=True)
+        tab1, tab2 = st.tabs(["📊 Visuals", "📋 Raw Data"])
+        
+        with tab1:
+            st.subheader("Interactive Insights")
+            c1, c2 = st.columns([1, 2])
+            with c1:
+                x_col = st.selectbox("X-Axis", df.columns)
+                y_col = st.selectbox("Y-Axis", df.columns)
+                color_col = st.selectbox("Color by", df.columns)
+            
+            with c2:
+                fig = px.histogram(df, x=x_col, y=y_col, color=color_col, 
+                                 template="plotly_white", barmode="group")
+                st.plotly_chart(fig, use_container_width=True)
+        
+        with tab2:
+            st.dataframe(df, use_container_width=True)
 
-    with col_img:
-        # High-quality professional analytics image
-        st.image("https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop", 
-                 caption="Real-time Data Processing Hub", use_container_width=True)
-
-    st.divider()
+# --- 3. AI PREDICTOR ---
+elif page == "🔮 AI Predictor":
+    st.title("Churn Prediction Engine")
+    st.write("Simulate customer behavior to test the model.")
     
-    # Quick Snapshot Metrics
-    st.subheader("System Highlights")
-    k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Revenue Growth", "+24.5%", "High")
-    k2.metric("Customer Churn", "3.2%", "-0.4%", delta_color="inverse")
-    k3.metric("Retention Cost", "$12.40", "Optimal")
-    k4.metric("AI Accuracy", "94.2%", "Stable")
-
-# --- 2. DASHBOARD ---
-elif page == "📊 Dashboard":
-    st.title("Business Snapshot")
-    col_l, col_r = st.columns(2)
-    with col_l:
-        st.subheader("📦 Category Performance")
-        mock_data = pd.DataFrame({"Category": ["Electronics", "Home", "Apparel", "Beauty"], "Sales": [4500, 3200, 2800, 1500]})
-        fig_pie = px.pie(mock_data, values='Sales', names='Category', hole=0.6)
-        st.plotly_chart(fig_pie, use_container_width=True)
-    with col_r:
-        st.subheader("📈 Sales Velocity")
-        line_data = pd.DataFrame({"Day": range(1,11), "Orders": [10, 12, 18, 15, 22, 25, 21, 28, 32, 35]})
-        fig_line = px.area(line_data, x="Day", y="Orders", color_discrete_sequence=['#00CC96'])
-        st.plotly_chart(fig_line, use_container_width=True)
-
-# --- 3. DATA LAB ---
-elif page == "📁 Data Lab":
-    st.title("Intelligence Center")
-    file = st.file_uploader("Import Sales Data (CSV)", type="csv")
-    if file:
-        df = pd.read_csv(file)
-        st.dataframe(df, use_container_width=True)
-    else:
-        st.info("Upload a retail CSV to unlock deep-dive analysis.")
-
-# --- 4. RISK ENGINE ---
-elif page == "🔮 Risk Engine":
-    st.title("AI Churn Prediction")
-    days_ago = st.slider("Days Since Last Purchase", 0, 365, 45)
-    if st.button("Generate Risk Assessment"):
-        risk_score = (days_ago * 0.3)
-        fig_gauge = go.Figure(go.Indicator(
-            mode = "gauge+number",
-            value = min(risk_score, 100),
-            title = {'text': "Churn Probability %"},
-            gauge = {'bar': {'color': "#1f77b4"}}))
-        st.plotly_chart(fig_gauge, use_container_width=True)
+    with st.expander("Configure Customer Parameters", expanded=True):
+        c1, c2 = st.columns(2)
+        days = c1.slider("Recency (Days since last buy)", 0, 365, 45)
+        freq = c2.slider("Frequency (Total Orders)", 1, 50, 5)
+    
+    if st.button("Calculate Churn Probability"):
+        # Research-based Logic Simulation
+        risk = (days * 0.4) - (freq * 1.5)
+        if risk > 15:
+            st.error(f"High Risk Detected: {risk:.1f}% probability")
+            st.warning("Action: Trigger 'Win-back' email sequence immediately.")
+        else:
+            st.success(f"Loyalty Confirmed: {risk:.1f}% probability")
+            st.balloons()
