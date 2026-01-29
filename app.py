@@ -2,82 +2,47 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# --- PAGE CONFIG ---
-st.set_page_config(
-    page_title="ChurnAnalytica", 
-    page_icon="🛍️",
-    layout="centered" # Best for mobile screens
-)
+st.set_page_config(page_title="InsightCommerce", layout="centered")
 
 # --- NAVIGATION ---
-st.sidebar.title("Navigation")
-page = st.sidebar.selectbox("Go to:", ["🏠 Home", "📊 Dashboard", "🔮 Churn Predictor", "📑 Project Report"])
+page = st.sidebar.selectbox("Go to:", ["🏠 Home", "📁 Data Upload & Analysis", "🔮 Predictor"])
 
-# --- 1. HOME PAGE ---
+# --- 1. HOME ---
 if page == "🏠 Home":
-    st.title("E-Commerce Purchase Prediction")
-    st.image("https://images.unsplash.com/photo-1556742044-3c52d6e88c62?auto=format&fit=crop&w=800&q=80")
-    st.markdown("""
-    ### Welcome!
-    This project uses **Machine Learning** to help e-commerce businesses:
-    * **Predict** if a customer will buy again.
-    * **Detect** customers likely to stop using the service (Churn).
-    * **Analyze** purchase patterns to improve strategy.
-    
-    👈 **Use the sidebar menu to explore the data!**
-    """)
+    st.title("E-Commerce Analytics")
+    st.write("Upload your customer data to identify churn risk and purchase patterns.")
+    st.image("https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80")
 
-# --- 2. DASHBOARD PAGE ---
-elif page == "📊 Dashboard":
-    st.header("Exploratory Data Analysis")
+# --- 2. DATA UPLOAD & ANALYSIS ---
+elif page == "📁 Data Upload & Analysis":
+    st.header("Upload Customer CSV")
+    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
     
-    # Mock data for visualization
-    chart_data = pd.DataFrame({
-        'Status': ['Loyal', 'At Risk', 'Lost'],
-        'Customers': [450, 180, 75]
-    })
-    
-    # Interactive Bar Chart
-    fig = px.bar(chart_data, x='Status', y='Customers', color='Status', 
-                 title="Current Customer Segmentation")
-    st.plotly_chart(fig, use_container_width=True)
-    
-    st.info("💡 **Insight:** 180 customers are 'At Risk'. Targeting them now could prevent revenue loss.")
-
-# --- 3. PREDICTOR PAGE ---
-elif page == "🔮 Churn Predictor":
-    st.header("Predict Churn Risk")
-    st.write("Enter customer details to see the prediction.")
-
-    with st.container():
-        recency = st.number_input("Days since last purchase", min_value=0, value=30)
-        frequency = st.number_input("Total number of orders", min_value=1, value=5)
-        monetary = st.number_input("Total spent ($)", min_value=0, value=100)
+    if uploaded_file is not None:
+        df = pd.read_csv(uploaded_file)
+        st.success("File uploaded successfully!")
         
-        if st.button("Run Prediction"):
-            # Simple logic for demo (Will be replaced by ML Model later)
-            if recency > 90:
-                st.error("Result: **HIGH CHURN RISK** 🚨")
-                st.write("Recommendation: Send a discount email immediately.")
-            else:
-                st.success("Result: **LOYAL CUSTOMER** ✅")
-                st.write("Recommendation: Keep engaging with new product arrivals.")
+        st.subheader("Data Preview")
+        st.write(df.head(5)) # Shows first 5 rows
+        
+        # Simple Logic to find Columns for Charting
+        columns = df.columns.tolist()
+        st.subheader("Visual Analysis")
+        x_axis = st.selectbox("Select X-axis (e.g., Category or Date)", columns)
+        y_axis = st.selectbox("Select Y-axis (e.g., Sales or Quantity)", columns)
+        
+        fig = px.bar(df, x=x_axis, y=y_axis, title=f"{y_axis} by {x_axis}")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Please upload a CSV file to see the analysis.")
 
-# --- 4. REPORT PAGE ---
-elif page == "📑 Project Report":
-    st.header("Project Methodology")
-    st.markdown("""
-    ### 1. Problem Statement
-    In e-commerce, it is 5x cheaper to retain an existing customer than to find a new one. This project predicts churn to save costs.
-    
-    ### 2. Dataset
-    Using the **Online Retail Dataset** (Kaggle), focusing on:
-    * **Recency:** Time since last order.
-    * **Frequency:** Total number of orders.
-    * **Monetary:** Total revenue per customer.
-    
-    ### 3. Tools Used
-    * **Python:** Data processing
-    * **Streamlit:** Web interface
-    * **Plotly:** Interactive charts
-    """)
+# --- 3. PREDICTOR ---
+elif page == "🔮 Predictor":
+    st.header("Churn Risk Calculator")
+    # (Same predictor code as before or enhanced with your ML model)
+    days = st.slider("Days since last purchase", 0, 365, 30)
+    if st.button("Analyze Risk"):
+        if days > 90:
+            st.error("🚨 HIGH RISK")
+        else:
+            st.success("✅ LOW RISK")
