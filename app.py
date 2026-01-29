@@ -2,103 +2,47 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# --- MODERN PAGE CONFIG ---
-st.set_page_config(
-    page_title="InsightCommerce Pro",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+st.set_page_config(page_title="InsightCommerce", layout="centered")
 
-# --- CUSTOM CSS FOR BETTER LOOKS ---
-st.markdown("""
-    <style>
-    .main {
-        background-color: #f5f7f9;
-    }
-    .stMetric {
-        background-color: #ffffff;
-        padding: 15px;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    .stButton>button {
-        width: 100%;
-        border-radius: 20px;
-        background-color: #007bff;
-        color: white;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# --- NAVIGATION ---
+page = st.sidebar.selectbox("Go to:", ["🏠 Home", "📁 Data Upload & Analysis", "🔮 Predictor"])
 
-# --- SIDEBAR ---
-with st.sidebar:
-    st.title("🛡️ ChurnAnalytica")
-    st.info("The Ultimate E-commerce Intelligence Suite")
-    page = st.radio("Menu", ["🏠 Dashboard Home", "📈 Analysis Lab", "🔮 AI Predictor"])
-    st.divider()
-    st.caption("v2.0 - Research Edition")
+# --- 1. HOME ---
+if page == "🏠 Home":
+    st.title("E-Commerce Analytics")
+    st.write("Upload your customer data to identify churn risk and purchase patterns.")
+    st.image("https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80")
 
-# --- 1. HOME DASHBOARD ---
-if page == "🏠 Dashboard Home":
-    st.title("Project Overview")
+# --- 2. DATA UPLOAD & ANALYSIS ---
+elif page == "📁 Data Upload & Analysis":
+    st.header("Upload Customer CSV")
+    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
     
-    # Hero Metric Row
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Avg. Retention", "84%", "+2.5%")
-    col2.metric("Churn Risk", "12%", "-1.2%", delta_color="inverse")
-    col3.metric("Avg. Order", "$142", "+$12")
-
-    st.markdown("---")
-    st.subheader("Why this Research Matters")
-    st.write("""
-    Retaining an existing customer is **5x cheaper** than acquiring a new one. 
-    This platform uses data to identify 'At-Risk' users before they leave.
-    """)
-    st.image("https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1000&q=80")
-
-# --- 2. ANALYSIS LAB ---
-elif page == "📈 Analysis Lab":
-    st.title("Data Intelligence Lab")
-    uploaded_file = st.file_uploader("Drop your CSV here", type="csv")
-    
-    if uploaded_file:
+    if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
+        st.success("File uploaded successfully!")
         
-        tab1, tab2 = st.tabs(["📊 Visuals", "📋 Raw Data"])
+        st.subheader("Data Preview")
+        st.write(df.head(5)) # Shows first 5 rows
         
-        with tab1:
-            st.subheader("Interactive Insights")
-            c1, c2 = st.columns([1, 2])
-            with c1:
-                x_col = st.selectbox("X-Axis", df.columns)
-                y_col = st.selectbox("Y-Axis", df.columns)
-                color_col = st.selectbox("Color by", df.columns)
-            
-            with c2:
-                fig = px.histogram(df, x=x_col, y=y_col, color=color_col, 
-                                 template="plotly_white", barmode="group")
-                st.plotly_chart(fig, use_container_width=True)
+        # Simple Logic to find Columns for Charting
+        columns = df.columns.tolist()
+        st.subheader("Visual Analysis")
+        x_axis = st.selectbox("Select X-axis (e.g., Category or Date)", columns)
+        y_axis = st.selectbox("Select Y-axis (e.g., Sales or Quantity)", columns)
         
-        with tab2:
-            st.dataframe(df, use_container_width=True)
+        fig = px.bar(df, x=x_axis, y=y_axis, title=f"{y_axis} by {x_axis}")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Please upload a CSV file to see the analysis.")
 
-# --- 3. AI PREDICTOR ---
-elif page == "🔮 AI Predictor":
-    st.title("Churn Prediction Engine")
-    st.write("Simulate customer behavior to test the model.")
-    
-    with st.expander("Configure Customer Parameters", expanded=True):
-        c1, c2 = st.columns(2)
-        days = c1.slider("Recency (Days since last buy)", 0, 365, 45)
-        freq = c2.slider("Frequency (Total Orders)", 1, 50, 5)
-    
-    if st.button("Calculate Churn Probability"):
-        # Research-based Logic Simulation
-        risk = (days * 0.4) - (freq * 1.5)
-        if risk > 15:
-            st.error(f"High Risk Detected: {risk:.1f}% probability")
-            st.warning("Action: Trigger 'Win-back' email sequence immediately.")
+# --- 3. PREDICTOR ---
+elif page == "🔮 Predictor":
+    st.header("Churn Risk Calculator")
+    # (Same predictor code as before or enhanced with your ML model)
+    days = st.slider("Days since last purchase", 0, 365, 30)
+    if st.button("Analyze Risk"):
+        if days > 90:
+            st.error("🚨 HIGH RISK")
         else:
-            st.success(f"Loyalty Confirmed: {risk:.1f}% probability")
-            st.balloons()
+            st.success("✅ LOW RISK")
