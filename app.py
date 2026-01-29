@@ -1,96 +1,97 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
-# --- PAGE SETUP ---
-st.set_page_config(page_title="CommerceIntel Pro", layout="wide")
+# --- PAGE CONFIG ---
+st.set_page_config(page_title="CommerceIntel Pro", layout="wide", page_icon="📈")
 
-# --- CUSTOM INTERFACE STYLING ---
+# --- CUSTOM STYLING ---
 st.markdown("""
     <style>
-    .main { background-color: #f8f9fa; }
-    .stMetric { background-color: #ffffff; border: 1px solid #e0e0e0; padding: 20px; border-radius: 12px; }
-    div[data-testid="stExpander"] { border: none; box-shadow: 0px 4px 12px rgba(0,0,0,0.05); }
+    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #eee; }
     </style>
     """, unsafe_allow_html=True)
 
 # --- SIDEBAR NAVIGATION ---
-with st.sidebar:
-    st.title("🚀 CommerceIntel")
-    st.write("Commercial Intelligence & Retention Suite")
-    menu = st.selectbox("Select Workspace", ["Snapshot", "Data Explorer", "Predictive Engine"])
-    st.divider()
-    st.caption("System Status: Online")
+st.sidebar.header("🕹️ Control Panel")
+page = st.sidebar.selectbox("Go to:", ["🏠 Home", "📁 Analysis Center", "🔮 Risk Predictor"])
 
-# --- 1. SNAPSHOT (High-Level Metrics) ---
-if menu == "Snapshot":
-    st.title("Business Performance Snapshot")
+# --- 1. HOME ---
+if page == "🏠 Home":
+    st.title("E-Commerce Intelligence Suite")
+    st.markdown("""
+    ### Transform your raw data into strategy.
+    Use this tool to:
+    * **Upload** sales CSVs and see instant summaries.
+    * **Analyze** product performance with interactive visuals.
+    * **Predict** customer churn using behavioral sliders.
+    """)
+    st.image("https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80")
+
+# --- 2. ANALYSIS CENTER ---
+elif page == "📁 Analysis Center":
+    st.title("Data Intelligence Lab")
+    uploaded_file = st.file_uploader("Upload CSV", type="csv")
     
-    # KPIs in different formats
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.metric("Total Revenue", "$428,500", "+12%")
-    with c2:
-        st.metric("Retention Rate", "91.2%", "2.4%")
-    with c3:
-        st.metric("Churn Risk", "4.8%", "-0.5%", delta_color="inverse")
-
-    st.divider()
-    
-    # Multi-format charts
-    col_left, col_right = st.columns(2)
-    
-    with col_left:
-        st.subheader("Sales Distribution")
-        pie_data = pd.DataFrame({"Cat": ["Electronics", "Fashion", "Home"], "Val": [40, 35, 25]})
-        st.plotly_chart(px.pie(pie_data, values='Val', names='Cat', hole=0.5), use_container_width=True)
-
-    with col_right:
-        st.subheader("Monthly Growth")
-        line_data = pd.DataFrame({"Month": ["Jan", "Feb", "Mar", "Apr"], "Sales": [10, 15, 13, 19]})
-        st.plotly_chart(px.line(line_data, x="Month", y="Sales", markers=True), use_container_width=True)
-
-# --- 2. DATA EXPLORER (Table Formats) ---
-elif menu == "Data Explorer":
-    st.title("Customer Intelligence Lab")
-    uploaded_file = st.file_uploader("Import Customer Dataset (CSV)", type="csv")
-
     if uploaded_file:
         df = pd.read_csv(uploaded_file)
-        
-        # Display data in various formats
-        st.subheader("Interactive Data Grid")
-        st.dataframe(df, use_container_width=True)
-        
-        st.subheader("Statistical Summary")
-        st.table(df.describe().head(5)) # Static table for key stats
-    else:
-        st.info("Upload a file to unlock advanced data grids.")
+        st.success(f"Successfully loaded {len(df)} rows.")
 
-# --- 3. PREDICTIVE ENGINE ---
-elif menu == "Predictive Engine":
-    st.title("Customer Retention AI")
+        # --- FEATURE: AUTO-KPI CARDS ---
+        st.subheader("💡 Quick Stats")
+        kpi1, kpi2, kpi3 = st.columns(3)
+        
+        # Checking for common column names (Sales, Price, etc.)
+        num_cols = df.select_dtypes(include=['number']).columns
+        if not num_cols.empty:
+            kpi1.metric("Total Volume", f"{df[num_cols[0]].sum():,.0f}")
+            kpi2.metric("Avg Value", f"{df[num_cols[0]].mean():,.2f}")
+            kpi3.metric("Unique Records", len(df))
+
+        st.divider()
+
+        # --- FEATURE: INTERACTIVE FILTERING ---
+        st.subheader("📊 Visual Explorer")
+        all_cols = df.columns.tolist()
+        
+        col_a, col_b, col_c = st.columns(3)
+        x_ax = col_a.selectbox("Horizontal (X) Axis", all_cols)
+        y_ax = col_b.selectbox("Vertical (Y) Axis", num_cols if not num_cols.empty else all_cols)
+        chart_type = col_c.selectbox("Chart Style", ["Bar", "Line", "Scatter", "Pie"])
+
+        # --- FEATURE: DYNAMIC CHARTING ---
+        if chart_type == "Bar":
+            fig = px.bar(df, x=x_ax, y=y_ax, color=x_ax, template="plotly_white")
+        elif chart_type == "Line":
+            fig = px.line(df, x=x_ax, y=y_ax, template="plotly_white")
+        elif chart_type == "Scatter":
+            fig = px.scatter(df, x=x_ax, y=y_ax, color=x_ax)
+        else:
+            fig = px.pie(df, names=x_ax, values=y_ax)
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        # --- FEATURE: DATA EXPORT ---
+        st.download_button("📥 Download Analysis as CSV", df.to_csv().encode('utf-8'), "analysis.csv", "text/csv")
+    else:
+        st.info("Waiting for data... Please upload a CSV to begin.")
+
+# --- 3. RISK PREDICTOR ---
+elif page == "🔮 Risk Predictor":
+    st.title("Churn Probability Engine")
+    st.write("Determine how likely a customer is to leave.")
     
     with st.container():
-        st.write("Adjust parameters to calculate churn probability.")
-        col1, col2 = st.columns(2)
-        recency = col1.slider("Last Purchase (Days)", 0, 180, 20)
-        freq = col2.number_input("Total Orders", 1, 100, 5)
+        c1, c2 = st.columns(2)
+        days = c1.slider("Last Purchase (Days Ago)", 0, 365, 30)
+        orders = c2.number_input("Lifetime Orders", 1, 100, 5)
         
         if st.button("Generate Risk Profile"):
-            # Calculation logic
-            risk_score = (recency * 0.5) / freq
-            
-            # Visual Gauge Format
-            fig = go.Figure(go.Indicator(
-                mode = "gauge+number",
-                value = risk_score,
-                title = {'text': "Churn Probability %"},
-                gauge = {'axis': {'range': [None, 100]},
-                         'bar': {'color': "darkblue"},
-                         'steps' : [
-                             {'range': [0, 30], 'color': "lightgreen"},
-                             {'range': [30, 70], 'color': "yellow"},
-                             {'range': [70, 100], 'color': "red"}]}))
-            st.plotly_chart(fig, use_container_width=True)
+            # Simple logical feature: Risk Scoring
+            score = (days * 0.5) - (orders * 2)
+            if score > 20:
+                st.error(f"High Churn Risk (Score: {score:.1f})")
+                st.warning("Action Needed: Send a retention discount coupon.")
+            else:
+                st.success(f"Healthy Relationship (Score: {score:.1f})")
+                st.balloons()
