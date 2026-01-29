@@ -1,107 +1,97 @@
-import streamlit as st
+Import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
-from io import BytesIO
 
-# --- CONFIG ---
-st.set_page_config(page_title="CommerceIntel Pro", layout="wide", page_icon="💡")
+# --- PAGE CONFIG ---
+st.set_page_config(page_title="CommerceIntel Pro", layout="wide", page_icon="📈")
 
-# --- SESSION STATE ---
-if 'data' not in st.session_state:
-    st.session_state.data = None
+# --- CUSTOM STYLING ---
+st.markdown("""
+    <style>
+    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #eee; }
+    </style>
+    """, unsafe_allow_html=True)
 
-# --- SIDEBAR ---
-with st.sidebar:
-    st.title("💎 Intelligence Suite")
-    page = st.radio("Workspace", ["Dashboard", "Strategy Lab", "Export Center"])
-    st.divider()
-    st.info("Tip: Upload a CSV in 'Strategy Lab' to activate AI suggestions.")
+# --- SIDEBAR NAVIGATION ---
+st.sidebar.header("🕹️ Control Panel")
+page = st.sidebar.selectbox("Go to:", ["🏠 Home", "📁 Analysis Center", "🔮 Risk Predictor"])
 
-# --- 1. DASHBOARD ---
-if page == "Dashboard":
-    st.title("Commercial Snapshot")
+# --- 1. HOME ---
+if page == "🏠 Home":
+    st.title("E-Commerce Intelligence Suite")
+    st.markdown("""
+    ### Transform your raw data into strategy.
+    Use this tool to:
+    * **Upload** sales CSVs and see instant summaries.
+    * **Analyze** product performance with interactive visuals.
+    * **Predict** customer churn using behavioral sliders.
+    """)
+    st.image("https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80")
+
+# --- 2. ANALYSIS CENTER ---
+elif page == "📁 Analysis Center":
+    st.title("Data Intelligence Lab")
+    uploaded_file = st.file_uploader("Upload CSV", type="csv")
     
-    # Visualizing various formats: Metric, Gauge, and Area
-    c1, c2, c3 = st.columns([1, 1, 2])
-    
-    with c1:
-        st.metric("Retention Rate", "88%", "+2.1%")
-        st.metric("Avg Order Value", "$142", "-$5")
-    
-    with c2:
-        # Gauge Format for quick health check
-        fig_gauge = go.Figure(go.Indicator(
-            mode = "gauge+number", value = 72,
-            title = {'text': "Market Reach %"},
-            gauge = {'bar': {'color': "#3b82f6"}}))
-        fig_gauge.update_layout(height=250, margin=dict(l=10, r=10, t=40, b=10))
-        st.plotly_chart(fig_gauge, use_container_width=True)
-        
-    with c3:
-        # Area Format for trends
-        df_trend = pd.DataFrame({"Week": [1,2,3,4], "Users": [100, 120, 115, 140]})
-        st.plotly_chart(px.area(df_trend, x="Week", y="Users", title="Weekly User Growth"), use_container_width=True)
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        st.success(f"Successfully loaded {len(df)} rows.")
 
-# --- 2. STRATEGY LAB (Intelligence & Action) ---
-elif page == "Strategy Lab":
-    st.title("Strategy & Problem Solving")
-    file = st.file_uploader("Upload Retail Data", type=["csv", "xlsx"])
-
-    if file:
-        # Handling multiple formats (CSV and Excel)
-        if file.name.endswith('.csv'):
-            df = pd.read_csv(file)
-        else:
-            df = pd.read_excel(file)
+        # --- FEATURE: AUTO-KPI CARDS ---
+        st.subheader("💡 Quick Stats")
+        kpi1, kpi2, kpi3 = st.columns(3)
         
-        st.session_state.data = df
-        st.success(f"Analyzed {file.name} successfully.")
-
-        st.subheader("🤖 Automated Suggestions")
-        
-        # Logic to provide suggestions based on data
+        # Checking for common column names (Sales, Price, etc.)
         num_cols = df.select_dtypes(include=['number']).columns
         if not num_cols.empty:
-            low_performers = df[df[num_cols[0]] < df[num_cols[0]].mean()]
-            
-            col_a, col_b = st.columns(2)
-            with col_a:
-                st.warning(f"Found {len(low_performers)} underperforming segments.")
-                st.write("**Suggested Action:** Apply a 'Volume Discount' to these items to increase turnover.")
-            
-            with col_b:
-                st.success("High-growth potential identified in top 10% of records.")
-                st.write("**Suggested Action:** Move these to 'Featured' status on your homepage.")
+            kpi1.metric("Total Volume", f"{df[num_cols[0]].sum():,.0f}")
+            kpi2.metric("Avg Value", f"{df[num_cols[0]].mean():,.2f}")
+            kpi3.metric("Unique Records", len(df))
 
         st.divider()
-        st.subheader("🔍 Deep Dive Analysis")
-        st.dataframe(df.style.highlight_max(axis=0, color='#dcfce7'), use_container_width=True)
-    else:
-        st.info("Upload your data to receive automated business suggestions.")
 
-# --- 3. EXPORT CENTER (Various Formats) ---
-elif page == "Export Center":
-    st.title("Results Export")
-    if st.session_state.data is not None:
-        df = st.session_state.data
-        st.write("Choose your preferred format for the final report:")
+        # --- FEATURE: INTERACTIVE FILTERING ---
+        st.subheader("📊 Visual Explorer")
+        all_cols = df.columns.tolist()
         
-        c1, c2 = st.columns(2)
-        
-        # Format 1: CSV
-        csv = df.to_csv(index=False).encode('utf-8')
-        c1.download_button("📥 Download as CSV", data=csv, file_name="report.csv", mime="text/csv")
-        
-        # Format 2: JSON (For developers)
-        json = df.to_json(orient='records').encode('utf-8')
-        c2.download_button("📥 Download as JSON", data=json, file_name="report.json", mime="application/json")
-        
-        st.markdown("""
-        ### 📋 Summary Report
-        **Data Health:** Good  
-        **Primary Insight:** Customer frequency is the strongest predictor of loyalty in this set.  
-        **Next Steps:** Implement the loyalty program suggested in the 'Strategy Lab'.
-        """)
+        col_a, col_b, col_c = st.columns(3)
+        x_ax = col_a.selectbox("Horizontal (X) Axis", all_cols)
+        y_ax = col_b.selectbox("Vertical (Y) Axis", num_cols if not num_cols.empty else all_cols)
+        chart_type = col_c.selectbox("Chart Style", ["Bar", "Line", "Scatter", "Pie"])
+
+        # --- FEATURE: DYNAMIC CHARTING ---
+        if chart_type == "Bar":
+            fig = px.bar(df, x=x_ax, y=y_ax, color=x_ax, template="plotly_white")
+        elif chart_type == "Line":
+            fig = px.line(df, x=x_ax, y=y_ax, template="plotly_white")
+        elif chart_type == "Scatter":
+            fig = px.scatter(df, x=x_ax, y=y_ax, color=x_ax)
+        else:
+            fig = px.pie(df, names=x_ax, values=y_ax)
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        # --- FEATURE: DATA EXPORT ---
+        st.download_button("📥 Download Analysis as CSV", df.to_csv().encode('utf-8'), "analysis.csv", "text/csv")
     else:
-        st.error("No data available to export. Please upload data in the Strategy Lab first.")
+        st.info("Waiting for data... Please upload a CSV to begin.")
+
+# --- 3. RISK PREDICTOR ---
+elif page == "🔮 Risk Predictor":
+    st.title("Churn Probability Engine")
+    st.write("Determine how likely a customer is to leave.")
+    
+    with st.container():
+        c1, c2 = st.columns(2)
+        days = c1.slider("Last Purchase (Days Ago)", 0, 365, 30)
+        orders = c2.number_input("Lifetime Orders", 1, 100, 5)
+        
+        if st.button("Generate Risk Profile"):
+            # Simple logical feature: Risk Scoring
+            score = (days * 0.5) - (orders * 2)
+            if score > 20:
+                st.error(f"High Churn Risk (Score: {score:.1f})")
+                st.warning("Action Needed: Send a retention discount coupon.")
+            else:
+                st.success(f"Healthy Relationship (Score: {score:.1f})")
+                st.balloons()
