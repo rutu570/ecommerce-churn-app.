@@ -2,103 +2,91 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from datetime import datetime
 
-# --- CONFIG & THEME ---
-st.set_page_config(
-    page_title="CommerceIntel Pro",
-    page_icon="💎",
-    layout="wide"
-)
+# --- SETTINGS & THEME ---
+st.set_page_config(page_title="CommerceIntel Pro", layout="wide", page_icon="📈")
 
-# Custom Professional Styling
+# Custom UI Styling
 st.markdown("""
     <style>
-    .main { background-color: #f4f7f6; }
-    .stMetric { background-color: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #e1e4e8; }
-    .hero-text { font-size: 42px; font-weight: 700; color: #1a1c23; margin-bottom: 0px; }
-    .sub-text { font-size: 18px; color: #586069; margin-bottom: 30px; }
+    .main { background-color: #f4f7f9; }
+    .stMetric { background-color: #ffffff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eef0f2; }
+    .hero-title { font-size: 50px; font-weight: 800; color: #1e293b; margin-bottom: 0px; }
+    .hero-subtitle { font-size: 20px; color: #64748b; margin-bottom: 30px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- SIDEBAR ---
+# --- SIDEBAR NAVIGATION ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/3039/3039434.png", width=80) # Logo
-    st.title("Admin Console")
-    page = st.selectbox("Switch Workspace", ["🏠 Overview", "📈 Intelligence Lab", "🔮 Risk Predictor"])
+    st.image("https://cdn-icons-png.flaticon.com/512/3039/3039434.png", width=60) # Small Logo
+    st.title("🛡️ CommerceIntel")
+    st.caption("Advanced Retail Analytics v3.0")
     st.divider()
-    st.caption("Active Session: Secure ✅")
+    page = st.radio("Navigation", ["🏠 Home", "📊 Dashboard", "📁 Data Lab", "🔮 Risk Engine"])
+    st.divider()
+    st.success("System: Connected")
 
-# --- 1. HOME (OVERVIEW) ---
-if page == "🏠 Overview":
-    # HERO SECTION
-    col_img, col_txt = st.columns([1.5, 1])
+# --- 1. HOME PAGE (New Premium UI) ---
+if page == "🏠 Home":
+    col_text, col_img = st.columns([1, 1.2], gap="large")
     
+    with col_text:
+        st.markdown('<p class="hero-title">Predictive Intelligence</p>', unsafe_allow_html=True)
+        st.markdown('<p class="hero-subtitle">Transform raw retail data into actionable growth strategies with AI-driven insights.</p>', unsafe_allow_html=True)
+        
+        st.info("📊 **Active Modules:** Churn Prediction, Trend Discovery, and Revenue Optimization.")
+        st.button("Explore Analytics Lab", type="primary", use_container_width=True)
+
     with col_img:
-        # Professional E-commerce/Analytics Image
+        # High-quality professional analytics image
         st.image("https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop", 
-                 use_container_width=True)
-    
-    with col_txt:
-        st.markdown('<p class="hero-text">Predictive Analytics</p>', unsafe_allow_html=True)
-        st.markdown('<p class="sub-text">Stop churn before it happens. Scale your revenue with AI-driven customer insights.</p>', unsafe_allow_html=True)
-        st.button("Launch New Analysis", type="primary")
+                 caption="Real-time Data Processing Hub", use_container_width=True)
 
     st.divider()
     
-    # KPI SECTION
+    # Quick Snapshot Metrics
     st.subheader("System Highlights")
     k1, k2, k3, k4 = st.columns(4)
     k1.metric("Revenue Growth", "+24.5%", "High")
-    k2.metric("Customer Churn", "2.1%", "-0.4%", delta_color="inverse")
+    k2.metric("Customer Churn", "3.2%", "-0.4%", delta_color="inverse")
     k3.metric("Retention Cost", "$12.40", "Optimal")
     k4.metric("AI Accuracy", "94.2%", "Stable")
 
-# --- 2. INTELLIGENCE LAB ---
-elif page == "📈 Intelligence Lab":
-    st.title("Customer Intelligence Lab")
-    st.write("Upload your dataset to visualize complex purchase patterns.")
-    
-    file = st.file_uploader("Upload CSV File", type="csv")
+# --- 2. DASHBOARD ---
+elif page == "📊 Dashboard":
+    st.title("Business Snapshot")
+    col_l, col_r = st.columns(2)
+    with col_l:
+        st.subheader("📦 Category Performance")
+        mock_data = pd.DataFrame({"Category": ["Electronics", "Home", "Apparel", "Beauty"], "Sales": [4500, 3200, 2800, 1500]})
+        fig_pie = px.pie(mock_data, values='Sales', names='Category', hole=0.6)
+        st.plotly_chart(fig_pie, use_container_width=True)
+    with col_r:
+        st.subheader("📈 Sales Velocity")
+        line_data = pd.DataFrame({"Day": range(1,11), "Orders": [10, 12, 18, 15, 22, 25, 21, 28, 32, 35]})
+        fig_line = px.area(line_data, x="Day", y="Orders", color_discrete_sequence=['#00CC96'])
+        st.plotly_chart(fig_line, use_container_width=True)
+
+# --- 3. DATA LAB ---
+elif page == "📁 Data Lab":
+    st.title("Intelligence Center")
+    file = st.file_uploader("Import Sales Data (CSV)", type="csv")
     if file:
         df = pd.read_csv(file)
-        tab_v, tab_d = st.tabs(["📊 Visual Explorer", "📂 Raw Dataset"])
-        
-        with tab_v:
-            c1, c2 = st.columns([1, 2])
-            with c1:
-                st.write("### Chart Controls")
-                target = st.selectbox("Category Column", df.columns)
-                value = st.selectbox("Metric Column", df.select_dtypes(include='number').columns)
-            with c2:
-                fig = px.bar(df, x=target, y=value, color=target, template="plotly_white", barmode="group")
-                st.plotly_chart(fig, use_container_width=True)
-        
-        with tab_d:
-            st.dataframe(df, use_container_width=True)
+        st.dataframe(df, use_container_width=True)
+    else:
+        st.info("Upload a retail CSV to unlock deep-dive analysis.")
 
-# --- 3. RISK PREDICTOR ---
-elif page == "🔮 Risk Predictor":
-    st.title("Retention Risk Engine")
-    
-    with st.container(border=True):
-        st.write("### User Behavior Input")
-        r, f, m = st.columns(3)
-        recency = r.slider("Recency (Days)", 0, 365, 30)
-        freq = f.number_input("Frequency (Orders)", 1, 100, 10)
-        spend = m.number_input("Monetary ($)", 0, 5000, 500)
-        
-        if st.button("Generate Risk Profile", use_container_width=True):
-            score = (recency * 0.4) - (freq * 1.2)
-            
-            # GAUGE METER
-            fig = go.Figure(go.Indicator(
-                mode = "gauge+number",
-                value = max(0, min(score, 100)),
-                title = {'text': "Churn Risk Score"},
-                gauge = {'axis': {'range': [0, 100]},
-                         'bar': {'color': "#ff4b4b" if score > 30 else "#00cc96"},
-                         'steps': [{'range': [0, 30], 'color': "#e8f5e9"}, 
-                                   {'range': [30, 70], 'color': "#fff3e0"},
-                                   {'range': [70, 100], 'color': "#ffebee"}]}))
-            st.plotly_chart(fig, use_container_width=True)
-
+# --- 4. RISK ENGINE ---
+elif page == "🔮 Risk Engine":
+    st.title("AI Churn Prediction")
+    days_ago = st.slider("Days Since Last Purchase", 0, 365, 45)
+    if st.button("Generate Risk Assessment"):
+        risk_score = (days_ago * 0.3)
+        fig_gauge = go.Figure(go.Indicator(
+            mode = "gauge+number",
+            value = min(risk_score, 100),
+            title = {'text': "Churn Probability %"},
+            gauge = {'bar': {'color': "#1f77b4"}}))
+        st.plotly_chart(fig_gauge, use_container_width=True)
